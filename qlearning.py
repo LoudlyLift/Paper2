@@ -16,23 +16,21 @@ class qlearning:
         reset(self): resets env for a new game (including the first), and
         returns the starting state.
 
-        getRandomMove(self): get a random move.
-
         step(self, int): perform the specified move and return the tuple
             (state_new,reward,done).
 
-        getStateMetadata(): returns a tuple of the same length as the state
+        getStateMetadata(self): returns a tuple of the same length as the state
         vector. Each entry is an integer specifying the number of values that
         entry can take in the actual state vector.
 
-        getNumActions(): returns the number of actions that can be made at
+        getNumActions(self): returns the number of actions that can be made at
         any given time.
 
-        getLegalMoves(): returns a list of length == getNumActions(), whose
+        getLegalMoves(self): returns a list of length == getNumActions(), whose
         entries are False if the move is illegal, and true if
         legal. (Equivalently, could be a list of zero/one)
 
-        closeEpisode(): returns the result of the episode
+        closeEpisode(self): returns the result of the episode
 
     compute_randact(episode_num): given the episode number, this computes
     probability with which a random move should be made instead of action
