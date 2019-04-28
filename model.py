@@ -1,6 +1,6 @@
 import numpy
 
-def model:
+class model:
     """This class manages the state of the system in response to the device's
     actions, and evaluates the utility function.
 
