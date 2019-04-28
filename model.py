@@ -22,8 +22,8 @@ class model:
         of the `N_PARTS` parts to the server indicated by the index `selection`.
 
         """
-        assert(type(nOffload) == int) # don't judge
-        assert(0 <= nOffload and nOffload <= self.N_PARTS) #yes, equality on both sides
+        assert(type(nOffload) == int)
+        assert(0 <= nOffload and nOffload <= self.N_PARTS) #equality on both
 
         assert(type(selection) == int)
         assert(0 <= selection and selection < self.N_SERVERS)
