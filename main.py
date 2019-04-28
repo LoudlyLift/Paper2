@@ -7,6 +7,7 @@ import time
 import model
 import qtable
 import qlearning
+import itertools
 
 def Float2DMatrix(string):
     mat = ast.literal_eval(string)
@@ -37,7 +38,8 @@ parser = argparse.ArgumentParser(description='Implementation of the paper "Learn
 parser.add_argument('--log-period', type=int, default=100, help="How many steps to take between console updates (non-positive values disable logging)")
 
 # Q-LEARNING
-parser.add_argument('--num-steps', type=int, default=10000, help="How many steps to take")
+parser.add_argument('--train-steps', type=int, default=10000, help="How many steps to take for training")
+parser.add_argument('--eval-steps', type=int, default=1000, help="How many steps to take during evaluation")
 parser.add_argument('--fraction-randomized', type=float, default=0.1, help="What fraction ([0,1]) of actions should be chosen at random")
 parser.add_argument('--learning-rate', type=float, default=0.1, help="The Q-Table updates with a moving average. This is the weight of the most recent observation. Equivalent to 1-α from the paper.")
 parser.add_argument('--future-discount', type=float, default=0.5, help="What weight to place on future values; zero ignores all future consequences, values near one give them significant weight (Denoted by γ in the paper)")
@@ -65,15 +67,23 @@ class environment(model.model):
     def __init__(self, args):
         super().__init__(args.num_servers, args.num_parts, args.num_battery_levels, args.num_harvest_levels, args.transmission_rates)
 
+        self.isTrainable = True
+
+        servers = range(args.num_servers) # [0, num_servers)
+        parts = range(args.num_parts+1)   # [0, num_parts]
+        self.possible_actions = list(itertools.product(servers, parts))
+
+        self.move_legality = [True,] * len(self.possible_actions)
+
     def step(self, actionNum):
-        #super().step(selection, nOffload)
-        raise Exception("Not Implemented") #TODO: convert via lookup table?
+        (selection, nOffload) = self.possible_actions[actionNum]
+        return super.step(selection, nOffload)
 
     def getNumActions(self):
-        raise Exception("Not Implemented")
+        return len(self.possible_actions)
 
     def getLegalMoves(self):
-        raise Exception("Not Implemented")
+        return self.move_legality
 
 env = environment(args)
 
@@ -84,7 +94,7 @@ ql = qlearning.qlearning(env=env, compute_randact=lambda: args.fraction_randomiz
 
 
 print("Training Q-Table")
-ql.train(args.train_episodes, log_period=args.log_period)
+ql.train(args.train_steps, log_period=args.log_period)
 
 print("Evaluating Q-Table")
-results = ql.evaluate(args.eval_episodes)
+results = ql.evaluate(args.eval_steps)
