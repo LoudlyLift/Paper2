@@ -65,7 +65,7 @@ if(len(args.transmission_rates) != args.num_servers):
 
 class environment(model.model):
     def __init__(self, args):
-        super().__init__(args.num_servers, args.num_parts, args.num_battery_levels, args.num_harvest_levels, args.transmission_rates)
+        super().__init__(args.num_servers, args.num_parts, args.num_battery_levels, args.num_harvest_levels, args.transmission_rates, args.max_battery, args.max_harvest)
 
         self.isTrainable = True
 
@@ -77,7 +77,7 @@ class environment(model.model):
 
     def step(self, actionNum):
         (selection, nOffload) = self.possible_actions[actionNum]
-        return super.step(selection, nOffload)
+        return super().step(selection, nOffload)
 
     def getNumActions(self):
         return len(self.possible_actions)
@@ -87,7 +87,7 @@ class environment(model.model):
 
 env = environment(args)
 
-ql = qlearning.qlearning(env=env, compute_randact=lambda: args.fraction_randomized,
+ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_randomized,
                          consPlayer=qtable.qtable,
                          player_config={"learning_rate": args.learning_rate},
                          future_discount=args.future_discount)

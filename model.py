@@ -17,30 +17,49 @@ class model:
 
             super().__init__(mat)
 
-        def step(self):
-            index = super().step()
-            return self.rates(cStates)
-
         def statecount(self):
             return self.cStates
 
+        def rateFromIndex(self, index):
+            return self.rates[index]
+
     def __init__(self, cServers, cParts, cBatteryLevels, cHarvestLevels,
-                 transmission_rates):
+                 transmission_rates, max_battery, max_harvest):
         self.C_SERVERS = cServers
         self.C_PARTS = cParts
         self.C_BAT = cBatteryLevels
         self.C_HARVEST = cHarvestLevels
+        self.MAX_BATTERY = max_battery
+        self.MAX_HARVEST = max_harvest
 
-    def getState(self):
-        raise Exception("Not Implemented")
+        self.transmission_rates = transmission_rates
 
-    def reset(self):
-        #TODO?
-        self.connections = [ model.connection(rates) for rates in transmission_rates ]
-        return self.getState()
+        self.reset()
 
     def getStateMetadata(self):
         return tuple(con.statecount() for con in self.connections) + (self.C_HARVEST, self.C_BAT)
+
+    def getState(self):
+        bat = self.battery * self.C_BAT / self.MAX_BATTERY
+        bat = round(bat)
+
+        harv = self.harvest_est * self.C_HARVEST / self.MAX_HARVEST
+        harv = round(harv)
+
+        return tuple(self.datarates) + (harv,bat)
+
+    def reset(self):
+        #TODO?
+        self.connections = [ model.connection(rates) for rates in self.transmission_rates ]
+        self.battery = 0
+
+        self.step_computations()
+        return self.getState()
+
+
+    def step_computations(self):
+        self.datarates = [ con.step() for con in self.connections ]
+        self.harvest_est = 0 #TODO
 
     def step(self, selection, nOffload):
         """Simulates a single timestep. The device elects to offload `nOffload`
@@ -53,9 +72,10 @@ class model:
         assert(type(selection) == int)
         assert(0 <= selection and selection < self.C_SERVERS)
 
-        raise Exception("Not Implemented")
+        self.step_computations()
+        state = self.getState()
 
-        state = getState()
+        raise Exception("Not Implemented")
 
         done = False
         return (state, reward, done)
