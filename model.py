@@ -14,7 +14,7 @@ def model:
     def reset(self):
         raise Exception("Not Implemented")
 
-    def getStateShape(self):
+    def getStateMetadata(self):
         raise Exception("Not Implemented")
 
     def step(self, selection, nOffload):
@@ -30,7 +30,7 @@ def model:
 
         raise Exception("Not Implemented")
 
-    def getResults(self):
+    def closeEpisode(self):
         """Returns a list. That contains, for each time step, the tuple (energy
         consumption, computational latency, whether or not the task dropped,
         utility)
