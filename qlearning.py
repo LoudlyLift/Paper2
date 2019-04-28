@@ -97,7 +97,8 @@ class qlearning:
                 while not done:
                     allActQs = self.player.computeQState(state_old)
                     if training and numpy.random.rand(1) < self._compute_randact(self._train_episode_count):
-                        act = self._env.getRandomMove()
+                        raise Exception("Not Implemented")
+                        act = self._env.getRandomMove() #TODO compute it yourself; you have the legalMoves vector.
                     else:
                         legalMoves = self._env.getLegalMoves()
                         act = bestLegalMove(allActQs, legalMoves)
