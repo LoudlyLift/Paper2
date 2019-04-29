@@ -1,5 +1,8 @@
-import numpy
+import itertools
 import math
+import numpy
+
+import helper
 
 def bestLegalMove(qvals, legality):
     qvals = qvals * legality
@@ -96,11 +99,12 @@ class qlearning:
 
                 while not done:
                     allActQs = self.player.computeQState(state_old)
+                    legalMoves = self._env.getLegalMoves()
                     if training and numpy.random.rand(1) < self._compute_randact(self._train_episode_count):
-                        raise Exception("Not Implemented")
-                        act = self._env.getRandomMove() #TODO compute it yourself; you have the legalMoves vector.
+                        #TODO: this step is MUCH slower than choosing a single
+                        #random int, which is what the environment would do.
+                        (_, _, act) = helper.choose(zip(allActQs, legalMoves, itertools.count()), lambda tup: tup[1])
                     else:
-                        legalMoves = self._env.getLegalMoves()
                         act = bestLegalMove(allActQs, legalMoves)
 
                     state_new,reward,done = self._env.step(act)
