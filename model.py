@@ -66,21 +66,26 @@ class model:
         return tuple(self.iDataRates) + (harv,bat)
 
     def reset(self):
-        #TODO?
         self.connections = [ model.connection(rates) for rates in self.TRANSMISSION_RATES ]
+        self.iDataRates = [ con.state for con in self.connections ]
+
         self.battery = 0
+
+        self.results = []
 
         self.computation_prestep()
         return self.getState()
 
 
     def computation_prestep(self):
-        self.iDataRates = [ con.step() for con in self.connections ]
-
         self.harvest = self.MAX_HARVEST #TODO
         self.harvest_est = self.MAX_HARVEST #TODO
 
     def computation_step(self, selection, nOffload):
+        # Compute new connection rates
+        self.iDataRates = [ con.step() for con in self.connections ]
+
+
         #x^{(k)}*C^{(k)}
         cOffloadBits = (nOffload/self.C_PARTS)*self.DATA_GEN_RATE
 
@@ -144,6 +149,7 @@ class model:
         assert(0 <= selection and selection < self.C_SERVERS)
 
         (reward,) = self.computation_step(selection, nOffload)
+        self.results.append(reward)
 
         # "pre"-step computations are done after computing the reward because
         # it's actually setting up the state for the NEXT step.
@@ -159,4 +165,4 @@ class model:
         utility)
 
         """
-        raise Exception("Not Implemented")
+        return self.results

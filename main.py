@@ -35,10 +35,10 @@ assert(__name__ == "__main__")
 parser = argparse.ArgumentParser(description='Implementation of the paper "Learning-Based Computation Offloading for IoT Devices With Energy Harvesting" by M. Min, et. al. Published in IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY, VOL. 68, NO. 2, FEBRUARY 2019')
 
 # META
-parser.add_argument('--log-period', type=int, default=100, help="How many steps to take between console updates (non-positive values disable logging)")
+parser.add_argument('--log-period', type=int, default=1000, help="How many steps to take between console updates (non-positive values disable logging)")
 
 # Q-LEARNING
-parser.add_argument('--train-steps', type=int, default=10000, help="How many steps to take for training")
+parser.add_argument('--train-steps', type=int, default=30000, help="How many steps to take for training")
 parser.add_argument('--eval-steps', type=int, default=1000, help="How many steps to take during evaluation")
 parser.add_argument('--fraction-randomized', type=float, default=0.1, help="What fraction ([0,1]) of actions should be chosen at random")
 parser.add_argument('--learning-rate', type=float, default=0.1, help="The Q-Table updates with a moving average. This is the weight of the most recent observation. Equivalent to 1-α from the paper.")
@@ -112,8 +112,10 @@ ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_random
                          future_discount=args.future_discount)
 
 
+
 print("Training Q-Table")
-ql.train(args.train_steps, log_period=args.log_period)
+foo = ql.train(episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
+print(foo)
 
 print("Evaluating Q-Table")
 results = ql.evaluate(args.eval_steps)

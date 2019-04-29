@@ -68,15 +68,15 @@ class qlearning:
             self._train_update_count = math.nan
             self._train_episode_count = math.nan
 
-    def evaluate(self, count, log_period=1):
+    def evaluate(self, episode_count=1, step_count=0, log_episodes=1, log_steps=0):
         """runs count episodes without updating Q-values.
 
         returns a list of the things returned by closeEpisode
 
         """
-        return self._runEpisodes(count, training=False, log_period=log_period)
+        return self._runEpisodes(training=False, episode_count=episode_count, step_count=step_count, log_episodes=log_episodes, log_steps=log_steps)
 
-    def train(self, count, log_period=100):
+    def train(self, episode_count=1, step_count=0, log_episodes=1, log_steps=0):
         """runs count episodes while updating Q-Values.
 
         returns a list of the things returned by closeEpisode
@@ -84,20 +84,26 @@ class qlearning:
         """
         if not self._env.isTrainable:
             return []
-        return self._runEpisodes(count, training=True, log_period=log_period)
+        return self._runEpisodes(training=True, episode_count=episode_count, step_count=step_count, log_episodes=log_episodes, log_steps=log_steps)
 
-    def _runEpisodes(self, count, training, log_period):
+    def _runEpisodes(self, training, episode_count, step_count, log_episodes, log_steps):
         results = []
         cStep = 0
-        for i in range(count):
-            if log_period > 0 and i % log_period == 0:
-                print(f"\r{i} / {count}", end="")
+        episode_count = max(1, episode_count)
+        assert(step_count == 0 or episode_count == 1)
+        for i in range(episode_count):
+            if log_episodes > 0 and i % log_episodes == 0:
+                print(f"EPISODE: \r{i} / {count}", end="" if log_steps==0 else "\n")
             try:
                 state_old = self._env.reset()
                 reward_sum = 0
                 done = False
 
                 while not done:
+                    if step_count > 0 and log_steps > 0 and cStep % log_steps == 0:
+                        print(f"\r    STEP: {cStep} / {step_count}", end="")
+                    if step_count != 0 and cStep == step_count:
+                        break
                     allActQs = self.player.computeQState(state_old)
                     legalMoves = self._env.getLegalMoves()
                     if training and numpy.random.rand(1) < self._compute_randact(self._train_episode_count):
@@ -123,14 +129,13 @@ class qlearning:
                     reward_sum += reward
                     state_old = state_new
                     cStep += 1
-
                 results.append(self._env.closeEpisode())
                 if training:
                     self._train_episode_count += 1
             except KeyboardInterrupt as e:
                 print("Keyboard Interrupt")
                 break
-        print("")
+        print("", end="\n")
         return results
 
     def getTrainUpdateCount(self):
