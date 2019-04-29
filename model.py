@@ -67,17 +67,17 @@ class model:
         self.connections = [ model.connection(rates) for rates in self.TRANSMISSION_RATES ]
         self.battery = 0
 
-        self.prestep_computations()
+        self.computation_prestep()
         return self.getState()
 
 
-    def prestep_computations(self):
+    def computation_prestep(self):
         self.datarates = [ con.step() for con in self.connections ]
 
         self.harvest = 0 #TODO
         self.harvest_est = 0 #TODO
 
-    def computeReward(self, selection, nOffload):
+    def computation_step(self, selection, nOffload):
         assert(0 <= self.battery and self.battery <= self.MAX_BATTERY)
 
         #x^{(k)}*C^{(k)}
@@ -121,7 +121,9 @@ class model:
         utility -= self.ENERGY_WEIGHT * energyConsumption
         utility -= self.LATENCY_WEIGHT * latency
 
-        return utility
+        #TODO update battery x2
+
+        return (utility,)
 
     def step(self, selection, nOffload):
         """Simulates a single timestep. The device elects to offload `nOffload`
@@ -134,12 +136,11 @@ class model:
         assert(type(selection) == int)
         assert(0 <= selection and selection < self.C_SERVERS)
 
-        #TODO update battery
-        reward = self.computeReward(selection, nOffload)
+        (reward,) = self.computation_step(selection, nOffload)
 
         # "pre"-step computations are done after computing the reward because
         # it's actually setting up the state for the NEXT step.
-        self.prestep_computations()
+        self.computation_prestep()
         state = self.getState()
 
         raise Exception("Not Implemented")
