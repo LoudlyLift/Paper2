@@ -1,4 +1,5 @@
 import numpy
+import math
 
 import markov
 
@@ -62,7 +63,7 @@ class model:
         harv = round(harv)
         assert(0 <= harv and harv < self.C_HARVEST)
 
-        return tuple(self.datarates) + (harv,bat)
+        return tuple(self.iDataRates) + (harv,bat)
 
     def reset(self):
         #TODO?
@@ -74,7 +75,7 @@ class model:
 
 
     def computation_prestep(self):
-        self.datarates = [ con.step() for con in self.connections ]
+        self.iDataRates = [ con.step() for con in self.connections ]
 
         self.harvest = self.MAX_HARVEST #TODO
         self.harvest_est = self.MAX_HARVEST #TODO
@@ -90,8 +91,8 @@ class model:
         cLocalCycles = cLocalBits * self.CYCLES_PER_BIT
 
         #B_i^{(k)}
-        linkRate = self.datarates[selection]
-
+        con = self.connections[selection]
+        linkRate = con.rateFromIndex(self.iDataRates[selection])
 
 
         #(1): TODO ASSUMING CONSTANT FREQ
