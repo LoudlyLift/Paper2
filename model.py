@@ -54,11 +54,13 @@ class model:
         return tuple(con.statecount() for con in self.connections) + (self.C_HARVEST, self.C_BAT)
 
     def getState(self):
-        bat = self.battery * self.C_BAT / self.MAX_BATTERY
+        bat = self.battery * (self.C_BAT-1) / self.MAX_BATTERY
         bat = round(bat)
+        assert(0 <= bat and bat < self.C_BAT)
 
-        harv = self.harvest_est * self.C_HARVEST / self.MAX_HARVEST
+        harv = self.harvest_est * (self.C_HARVEST-1) / self.MAX_HARVEST
         harv = round(harv)
+        assert(0 <= harv and harv < self.C_HARVEST)
 
         return tuple(self.datarates) + (harv,bat)
 
@@ -74,8 +76,8 @@ class model:
     def computation_prestep(self):
         self.datarates = [ con.step() for con in self.connections ]
 
-        self.harvest = 0 #TODO
-        self.harvest_est = 0 #TODO
+        self.harvest = self.MAX_HARVEST #TODO
+        self.harvest_est = self.MAX_HARVEST #TODO
 
     def computation_step(self, selection, nOffload):
         #x^{(k)}*C^{(k)}
@@ -114,7 +116,7 @@ class model:
 
         assert(0 <= self.battery and self.battery <= self.MAX_BATTERY)
         #(5)
-        self.battery += harvest
+        self.battery += self.harvest
         self.battery -= energyConsumption
         self.battery = min(self.battery, self.MAX_BATTERY)
         self.battery = max(self.battery, 0)
