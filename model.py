@@ -78,8 +78,6 @@ class model:
         self.harvest_est = 0 #TODO
 
     def computation_step(self, selection, nOffload):
-        assert(0 <= self.battery and self.battery <= self.MAX_BATTERY)
-
         #x^{(k)}*C^{(k)}
         cOffloadBits = (nOffload/self.C_PARTS)*self.DATA_GEN_RATE
 
@@ -114,6 +112,13 @@ class model:
         #(N/A): pg. 1933, directly above (5)
         energyConsumption = energyLocal + energyOffload
 
+        assert(0 <= self.battery and self.battery <= self.MAX_BATTERY)
+        #(5)
+        self.battery += harvest
+        self.battery -= energyConsumption
+        self.battery = min(self.battery, self.MAX_BATTERY)
+        self.battery = max(self.battery, 0)
+
         # (8)
         utility  = 0
         utility += cOffloadBits
@@ -121,7 +126,6 @@ class model:
         utility -= self.ENERGY_WEIGHT * energyConsumption
         utility -= self.LATENCY_WEIGHT * latency
 
-        #TODO update battery x2
 
         return (utility,)
 
@@ -142,8 +146,6 @@ class model:
         # it's actually setting up the state for the NEXT step.
         self.computation_prestep()
         state = self.getState()
-
-        raise Exception("Not Implemented")
 
         done = False
         return (state, reward, done)
