@@ -93,7 +93,7 @@ class qlearning:
         assert(step_count == 0 or episode_count == 1)
         for i in range(episode_count):
             if log_episodes > 0 and i % log_episodes == 0:
-                print(f"EPISODE: \r{i} / {count}", end="" if log_steps==0 else "\n")
+                print(f"EPISODE: \r{i} / {episode_count}", end="" if log_steps==0 else "\n")
             try:
                 state_old = self._env.reset()
                 reward_sum = 0
