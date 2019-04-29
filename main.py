@@ -57,7 +57,7 @@ parser.add_argument('--max-battery', type=float, default=7.4, help="The maximum 
 
 parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[3,4,5,6,7],[8,9,10,11,12],[5,6,7,9,10]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. There must be the same number of nested lists as there are servers, and each nested list must be the same length")
 parser.add_argument('--cycles-per-bit', type=int, default=1000, help="The number of CPU cycles it takes to process one bit of input data")
-parser.add_argument('--effective-capacitance', type=float, default=1e-11, help="The effective capacitance coefficient of the CPU's chip architecture")
+parser.add_argument('--effective-capacitance', type=float, default=1e-28, help="The effective capacitance coefficient of the CPU's chip architecture")
 parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's fixed clock frequency") #TODO: A, is clock frequency even supposed to be fixed? and B, what is the correct value?
 parser.add_argument('--drop-penalty', type=float, default=10, help="The cost of letting the battery level reach zero (ψ in the paper)")
 
