@@ -50,9 +50,21 @@ parser.add_argument('--num-parts', type=int, default=10, help="The number of par
 parser.add_argument('--num-battery-levels', type=int, default=21, help="The number of levels to quantize the battery into")
 parser.add_argument('--num-harvest-levels', type=int, default=6,  help="The number of levels to quantize the estimate of harvested energy into")
 
+parser.add_argument('--energy-weight', type=float, default=0.7, help="A weight that determines how important energy usage is to the optimization algorithm")
+parser.add_argument('--latency-weight', type=float, default=1.0, help="A weight that determines how important latency is to the optimization algorithm")
+
 parser.add_argument('--max-battery', type=float, default=7.4, help="The maximum charge the battery can hold (Wh)")
 
-parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[3,4,5,6,7],[8,9,10,11,12],[5,6,7,9,10]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. Must have ")
+parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[3,4,5,6,7],[8,9,10,11,12],[5,6,7,9,10]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. There must be the same number of nested lists as there are servers, and each nested list must be the same length")
+parser.add_argument('--cycles-per-bit', type=int, default=1000, help="The number of CPU cycles it takes to process one bit of input data")
+parser.add_argument('--effective-capacitance', type=float, default=1e-11, help="The effective capacitance coefficient of the CPU's chip architecture")
+parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's fixed clock frequency") #TODO: A, is clock frequency even supposed to be fixed? and B, what is the correct value?
+parser.add_argument('--drop-penalty', type=float, default=10, help="The cost of letting the battery level reach zero (ψ in the paper)")
+
+parser.add_argument('--transmit-power', type=float, default=0.5, help="The transmit power of the device itself (Watts)")
+
+#TODO: find actual value
+parser.add_argument('--data-gen-rate', type=float, default=(120e3*8), help="The rate at which the device generates tasks/data for processing (C^(k); units of bits (?) per time interval)")
 
 #TODO: calculate this dynamically
 parser.add_argument('--max-harvest', type=float, default=1.7e-3, help="The maximum amount of energy that CAN be harvested in a single tick (only affects quantization levels? actual max depends on the other parameters)")
@@ -65,7 +77,14 @@ if(len(args.transmission_rates) != args.num_servers):
 
 class environment(model.model):
     def __init__(self, args):
-        super().__init__(args.num_servers, args.num_parts, args.num_battery_levels, args.num_harvest_levels, args.transmission_rates, args.max_battery, args.max_harvest)
+        super().__init__(args.num_servers, args.num_parts,
+                         args.num_battery_levels, args.num_harvest_levels,
+                         args.transmission_rates, args.max_battery,
+                         args.max_harvest, args.data_gen_rate,
+                         args.energy_weight, args.latency_weight,
+                         args.drop_penalty, args.cycles_per_bit,
+                         args.effective_capacitance, args.clock_frequency,
+                         args.transmit_power)
 
         self.isTrainable = True
 
