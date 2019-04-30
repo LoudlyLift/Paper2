@@ -53,6 +53,7 @@ parser.add_argument('--num-parts', type=int, default=10, help="The number of par
 parser.add_argument('--num-battery-levels', type=int, default=21, help="The number of levels to quantize the battery into")
 parser.add_argument('--num-harvest-levels', type=int, default=6,  help="The number of levels to quantize the estimate of harvested energy into")
 
+parser.add_argument('--offload-weight', type=float, default=1e-3, help="A weight that determines how much emphasis the optimization algorithm will place on offloading tasks")
 parser.add_argument('--energy-weight', type=float, default=0.7, help="A weight that determines how important energy usage is to the optimization algorithm")
 parser.add_argument('--latency-weight', type=float, default=1.0, help="A weight that determines how important latency is to the optimization algorithm")
 
@@ -94,7 +95,8 @@ class environment(model.model):
                          args.energy_weight, args.latency_weight,
                          args.drop_penalty, args.cycles_per_bit,
                          args.effective_capacitance, args.clock_frequency,
-                         args.transmit_power, args.transmission_transitions)
+                         args.transmit_power, args.transmission_transitions,
+                         args.offload_weight)
 
         self.isTrainable = True
 

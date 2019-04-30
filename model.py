@@ -25,7 +25,7 @@ class model:
                  transmission_rates, max_battery, max_harvest, data_gen_rate,
                  energy_weight, latency_weight, drop_penalty, cycles_per_bit,
                  effective_capacitance, clock_frequency, transmit_power,
-                 transmission_transitions):
+                 transmission_transitions, offload_weight):
         #TODO: WAAY to many parameters here. Can argparse construct an object?
         #Then we could just pass that and save it. It'd make usage a little
         #uglier inside of this class (self.args.LATENCY_WEIGHT instead of
@@ -47,6 +47,7 @@ class model:
         self.EFFECTIVE_CAPACITANCE = effective_capacitance
         self.CLOCK_FREQ = clock_frequency
         self.TRANSMISSION_TRANSITIONS = transmission_transitions
+        self.OFFLOAD_WEIGHT = offload_weight
 
         self.reset()
 
@@ -130,12 +131,16 @@ class model:
 
         # (8)
         utility  = 0
-        utility += cOffloadBits / 1e3 #TODO: I'm assuming that the authors did this, otherwise the graphs don't line up
+        utility += self.OFFLOAD_WEIGHT * cOffloadBits
         utility -= self.DROP_PENALTY * dropped
         utility -= self.ENERGY_WEIGHT * energyConsumption
         utility -= self.LATENCY_WEIGHT * latency
 
-        return { "utility": utility, "battery": self.battery, "energyConsumption": energyConsumption, "latency": latency, "dropped": dropped}
+        return {
+            "utility": utility, "battery": self.battery,
+            "energyConsumption": energyConsumption, "latency": latency,
+            "dropped": dropped,
+        }
 
     def step(self, selection, nOffload):
         """Simulates a single timestep. The device elects to offload `nOffload`
