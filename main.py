@@ -1,8 +1,10 @@
 import argparse
 import ast
+import matplotlib.pyplot as plt
 import numpy
 import sys
 import time
+
 
 import model
 import qtable
@@ -36,6 +38,7 @@ parser = argparse.ArgumentParser(description='Implementation of the paper "Learn
 
 # META
 parser.add_argument('--log-period', type=int, default=0, help="How many steps to take between console updates (non-positive values disable logging)")
+parser.add_argument('--dir-out', type=str, default="./Out", help="The directory to save results to")
 
 # Q-LEARNING
 parser.add_argument('--train-steps', type=int, default=30000, help="How many steps to take for training")
@@ -118,11 +121,38 @@ ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_random
                          player_config={"learning_rate": args.learning_rate},
                          future_discount=args.future_discount)
 
-
-
 foo = ql.train(episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
 foo = foo[0] #because there's only one episode
-for bar in foo:
-    print(bar)
+
+def plot(data, key, weight=1):
+    """Plots an exponential moving average. Data is an iterable of dictionaries. The
+    values corresponding to the key `key` are plotted and saved to the output
+    directory.
+
+    """
+    data = iter(data)
+    count = 0
+    ys = []
+    try:
+        val = next(data)[key]
+        ys.append(val)
+        count += 1
+        while True:
+            dic = next(data)
+            val = weight*(dic[key]) + (1-weight)*val
+            count += 1
+            ys.append(val)
+    except StopIteration as e:
+        pass
+
+    #xs = list(range(count))
+
+    plt.title(key)
+    plt.plot(ys)
+    plt.savefig(f'{args.dir_out}/{key}.png', bbox_inches='tight')
+    plt.close()
+
+for key in ["utility", "battery", "energyConsumption", "latency", "dropped"]:
+    plot(foo, key, 0.01)
 
 #results = ql.evaluate(args.eval_steps)
