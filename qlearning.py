@@ -123,7 +123,7 @@ class qlearning:
                             legalMoves = self._env.getLegalMoves()
                             maxHypotheticalQ = bestLegalMove(qvals, legalMoves)
                         allActQs[act] = reward + self._future_discount * maxHypotheticalQ
-                        self.player.updateQState(cStep, state_old, allActQs)
+                        self.player.updateQState(state_old, allActQs)
                         self._train_update_count += 1
 
                     reward_sum += reward
