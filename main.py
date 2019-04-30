@@ -37,7 +37,7 @@ assert(__name__ == "__main__")
 parser = argparse.ArgumentParser(description='Implementation of the paper "Learning-Based Computation Offloading for IoT Devices With Energy Harvesting" by M. Min, et. al. Published in IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY, VOL. 68, NO. 2, FEBRUARY 2019')
 
 # META
-parser.add_argument('--log-period', type=int, default=0, help="How many steps to take between console updates (non-positive values disable logging)")
+parser.add_argument('--log-period', type=int, default=1000, help="How many steps to take between console updates (non-positive values disable logging)")
 parser.add_argument('--dir-out', type=str, default="./Out", help="The directory to save results to")
 
 # Q-LEARNING
@@ -124,12 +124,17 @@ ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_random
 foo = ql.train(episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
 foo = foo[0] #because there's only one episode
 
-def plot(data, key, weight=1):
+def plot(data, key, weight=1, ylabel=None, fName=None, fSuffix='.png'):
     """Plots an exponential moving average. Data is an iterable of dictionaries. The
     values corresponding to the key `key` are plotted and saved to the output
     directory.
 
     """
+    if ylabel is None:
+        ylabel = key
+    if fName is None:
+        fName = ylabel
+
     data = iter(data)
     count = 0
     ys = []
@@ -147,12 +152,18 @@ def plot(data, key, weight=1):
 
     #xs = list(range(count))
 
-    plt.title(key)
+    plt.xlabel('Time Slot')
+    plt.ylabel(ylabel)
     plt.plot(ys)
-    plt.savefig(f'{args.dir_out}/{key}.png', bbox_inches='tight')
+    (ymin, ymax) = plt.ylim()
+    plt.ylim(min(0, ymin), ymax)
+    plt.savefig(f'{args.dir_out}/{fName}{fSuffix}', bbox_inches='tight')
     plt.close()
 
-for key in ["utility", "battery", "energyConsumption", "latency", "dropped"]:
-    plot(foo, key, 0.01)
+for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energy"),
+                             ("latency", "Latency", "2-latency"),
+                             ("dropped", "Task Drop Rate", "3-drop"),
+                             ("utility","Utility","4-utility")]:
+    plot(foo, key, weight=0.001, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)
