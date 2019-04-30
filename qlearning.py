@@ -74,7 +74,7 @@ class qlearning:
         returns a list of the things returned by closeEpisode
 
         """
-        return self._runEpisodes(training=False, episode_count=episode_count, step_count=step_count, log_episodes=log_episodes, log_steps=log_steps)
+        return self.runEpisodes(training=False, episode_count=episode_count, step_count=step_count, log_episodes=log_episodes, log_steps=log_steps)
 
     def train(self, episode_count=1, step_count=0, log_episodes=1, log_steps=0):
         """runs count episodes while updating Q-Values.
@@ -84,16 +84,17 @@ class qlearning:
         """
         if not self._env.isTrainable:
             return []
-        return self._runEpisodes(training=True, episode_count=episode_count, step_count=step_count, log_episodes=log_episodes, log_steps=log_steps)
+        return self.runEpisodes(training=True, episode_count=episode_count, step_count=step_count, log_episodes=log_episodes, log_steps=log_steps)
 
-    def _runEpisodes(self, training, episode_count, step_count, log_episodes, log_steps):
+    def runEpisodes(self, training, episode_count, step_count, log_episodes, log_steps):
+        if training:
+            assert(self._env.isTrainable)
         results = []
-        cStep = 0
         episode_count = max(1, episode_count)
-        assert(step_count == 0 or episode_count == 1)
-        for i in range(episode_count):
+        for i in range(1, episode_count+1):
+            cStep = 0
             if log_episodes > 0 and i % log_episodes == 0:
-                print(f"EPISODE: \r{i} / {episode_count}", end="" if log_steps==0 else "\n")
+                print(f"\rEPISODE: {i} / {episode_count}", end="" if log_steps==0 else "\n")
             try:
                 state_old = self._env.reset()
                 reward_sum = 0

@@ -85,7 +85,6 @@ args = parser.parse_args()
 if(len(args.transmission_rates) != args.num_servers):
     print("The length of the list passed to --transmission-rates must equal the value of --num-servers", file=sys.stderr)
     exit(1)
-
 class environment(model.model):
     def __init__(self, args):
         super().__init__(args.num_servers, args.num_parts,
@@ -123,7 +122,11 @@ ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_random
                          player_config={"learning_rate": args.learning_rate},
                          future_discount=args.future_discount)
 
-foo = ql.train(episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
+print("Transfer training")
+ql.runEpisodes(training=True, episode_count=10000, step_count=20, log_episodes=100, log_steps=0)
+
+print("Actual training")
+foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
 foo = foo[0] #because there's only one episode
 
 def plot(data, key, weight=1, ylabel=None, fName=None, fSuffix='.png'):
