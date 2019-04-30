@@ -35,11 +35,11 @@ assert(__name__ == "__main__")
 parser = argparse.ArgumentParser(description='Implementation of the paper "Learning-Based Computation Offloading for IoT Devices With Energy Harvesting" by M. Min, et. al. Published in IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY, VOL. 68, NO. 2, FEBRUARY 2019')
 
 # META
-parser.add_argument('--log-period', type=int, default=1000, help="How many steps to take between console updates (non-positive values disable logging)")
+parser.add_argument('--log-period', type=int, default=0, help="How many steps to take between console updates (non-positive values disable logging)")
 
 # Q-LEARNING
 parser.add_argument('--train-steps', type=int, default=30000, help="How many steps to take for training")
-parser.add_argument('--eval-steps', type=int, default=1000, help="How many steps to take during evaluation")
+parser.add_argument('--eval-steps', type=int, default=3000, help="How many steps to take during evaluation")
 parser.add_argument('--fraction-randomized', type=float, default=0.1, help="What fraction ([0,1]) of actions should be chosen at random")
 parser.add_argument('--learning-rate', type=float, default=0.1, help="The Q-Table updates with a moving average. This is the weight of the most recent observation. Equivalent to 1-α from the paper.")
 parser.add_argument('--future-discount', type=float, default=0.5, help="What weight to place on future values; zero ignores all future consequences, values near one give them significant weight (Denoted by γ in the paper)")
@@ -53,9 +53,16 @@ parser.add_argument('--num-harvest-levels', type=int, default=6,  help="The numb
 parser.add_argument('--energy-weight', type=float, default=0.7, help="A weight that determines how important energy usage is to the optimization algorithm")
 parser.add_argument('--latency-weight', type=float, default=1.0, help="A weight that determines how important latency is to the optimization algorithm")
 
-parser.add_argument('--max-battery', type=float, default=7.4, help="The maximum charge the battery can hold (Wh)")
+parser.add_argument('--max-battery', type=float, default=(7.4*3600), help="The maximum charge the battery can hold (Wh)")
 
-parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[3,4,5,6,7],[8,9,10,11,12],[5,6,7,9,10]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. There must be the same number of nested lists as there are servers, and each nested list must be the same length")
+parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[4e6,5e6,6e6,7e6,10e6],
+                                                                         [8e6,9e6,10e6,11e6,12e6],
+                                                                         [5e6,6e6,7e6,9e6,10e6]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. There must be the same number of nested lists as there are servers, and each nested list must be the same length")
+parser.add_argument('--transmission-transitions', type=Float2DMatrix, default=[[0.5,   0.3,   0.15, 0.049, 0.001],
+                                                                               [0.2,   0.4,   0.3,  0.08,  0.02],
+                                                                               [0.05,  0.25,  0.4,  0.25,  0.05],
+                                                                               [0.02,  0.08,  0.3,  0.4,   0.2],
+                                                                               [0.001, 0.049, 0.15, 0.3,   0.5]], help="A 2D matrix that defines how likely it is to transfer from any one transmission state to another")
 parser.add_argument('--cycles-per-bit', type=int, default=1000, help="The number of CPU cycles it takes to process one bit of input data")
 parser.add_argument('--effective-capacitance', type=float, default=1e-28, help="The effective capacitance coefficient of the CPU's chip architecture")
 parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's fixed clock frequency") #TODO: A, is clock frequency even supposed to be fixed? and B, what is the correct value?
@@ -64,10 +71,10 @@ parser.add_argument('--drop-penalty', type=float, default=10, help="The cost of 
 parser.add_argument('--transmit-power', type=float, default=0.5, help="The transmit power of the device itself (Watts)")
 
 #TODO: find actual value
-parser.add_argument('--data-gen-rate', type=float, default=(120e3*8), help="The rate at which the device generates tasks/data for processing (C^(k); units of bits (?) per time interval)")
+parser.add_argument('--data-gen-rate', type=float, default=120e3, help="The rate at which the device generates tasks/data for processing (C^(k); units of bits (?) per time interval)")
 
 #TODO: calculate this dynamically
-parser.add_argument('--max-harvest', type=float, default=1.7e-3, help="The maximum amount of energy that CAN be harvested in a single tick (only affects quantization levels? actual max depends on the other parameters)")
+parser.add_argument('--max-harvest', type=float, default=(1.7e-3 * 3600), help="The maximum amount of energy that CAN be harvested in a single tick (only affects quantization levels? actual max depends on the other parameters)")
 
 args = parser.parse_args()
 
@@ -84,7 +91,7 @@ class environment(model.model):
                          args.energy_weight, args.latency_weight,
                          args.drop_penalty, args.cycles_per_bit,
                          args.effective_capacitance, args.clock_frequency,
-                         args.transmit_power)
+                         args.transmit_power, args.transmission_transitions)
 
         self.isTrainable = True
 
@@ -113,9 +120,9 @@ ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_random
 
 
 
-print("Training Q-Table")
 foo = ql.train(episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
-print(foo)
+foo = foo[0] #because there's only one episode
+for bar in foo:
+    print(bar)
 
-print("Evaluating Q-Table")
-results = ql.evaluate(args.eval_steps)
+#results = ql.evaluate(args.eval_steps)

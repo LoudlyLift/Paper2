@@ -10,13 +10,10 @@ class model:
     """
 
     class connection(markov.chain):
-        def __init__(self, rates):
+        def __init__(self, rates, transition):
             self.rates = rates
             self.cStates = len(self.rates)
-            mat = [ [ 1 / self.cStates for dest in range(self.cStates) ]
-                    for src in range(self.cStates)]
-
-            super().__init__(mat)
+            super().__init__(transition)
 
         def statecount(self):
             return self.cStates
@@ -27,7 +24,8 @@ class model:
     def __init__(self, cServers, cParts, cBatteryLevels, cHarvestLevels,
                  transmission_rates, max_battery, max_harvest, data_gen_rate,
                  energy_weight, latency_weight, drop_penalty, cycles_per_bit,
-                 effective_capacitance, clock_frequency, transmit_power):
+                 effective_capacitance, clock_frequency, transmit_power,
+                 transmission_transitions):
         #TODO: WAAY to many parameters here. Can argparse construct an object?
         #Then we could just pass that and save it. It'd make usage a little
         #uglier inside of this class (self.args.LATENCY_WEIGHT instead of
@@ -48,6 +46,7 @@ class model:
         self.TRANSMISSION_RATES = transmission_rates
         self.EFFECTIVE_CAPACITANCE = effective_capacitance
         self.CLOCK_FREQ = clock_frequency
+        self.TRANSMISSION_TRANSITIONS = transmission_transitions
 
         self.reset()
 
@@ -66,7 +65,7 @@ class model:
         return tuple(self.iDataRates) + (harv,bat)
 
     def reset(self):
-        self.connections = [ model.connection(rates) for rates in self.TRANSMISSION_RATES ]
+        self.connections = [ model.connection(rates, self.TRANSMISSION_TRANSITIONS) for rates in self.TRANSMISSION_RATES ]
         self.iDataRates = [ con.state for con in self.connections ]
 
         self.battery = 0
@@ -127,15 +126,16 @@ class model:
         self.battery = min(self.battery, self.MAX_BATTERY)
         self.battery = max(self.battery, 0)
 
+        dropped = int(self.battery == 0)
+
         # (8)
         utility  = 0
-        utility += cOffloadBits
-        utility -= self.DROP_PENALTY * (self.battery == 0)
+        utility += cOffloadBits / 1e3 #TODO: I'm assuming that the authors did this, otherwise the graphs don't line up
+        utility -= self.DROP_PENALTY * dropped
         utility -= self.ENERGY_WEIGHT * energyConsumption
         utility -= self.LATENCY_WEIGHT * latency
 
-
-        return (utility,)
+        return { "utility": utility, "battery": self.battery, "energyConsumption": energyConsumption, "latency": latency, "dropped": dropped}
 
     def step(self, selection, nOffload):
         """Simulates a single timestep. The device elects to offload `nOffload`
@@ -148,8 +148,8 @@ class model:
         assert(type(selection) == int)
         assert(0 <= selection and selection < self.C_SERVERS)
 
-        (reward,) = self.computation_step(selection, nOffload)
-        self.results.append(reward)
+        result = self.computation_step(selection, nOffload)
+        self.results.append(result)
 
         # "pre"-step computations are done after computing the reward because
         # it's actually setting up the state for the NEXT step.
@@ -157,7 +157,7 @@ class model:
         state = self.getState()
 
         done = False
-        return (state, reward, done)
+        return (state, result["utility"], done)
 
     def closeEpisode(self):
         """Returns a list. That contains, for each time step, the tuple (energy

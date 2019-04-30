@@ -11,7 +11,6 @@ IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY, VOL. 68, NO. 2, FEBRUARY 2019
     * x_k ∈ {l / N_x | 0 ≤ l ≤ N_x, l ∈ ℤ}
     * i.e. the action is [i_k, x_k], where i indicates which edge server to upload to, and x_k indicates how much data to upload v.s. process locally
   * the system state is s_k = [ each radio link data rate B_i^(k-1), estimated harvested energy, current battery level]
-  *
 * (1) the time   it takes to compute locally
 * (2) the energy it takes to compute locally
 * (3) the time   it takes to offload
@@ -20,3 +19,8 @@ IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY, VOL. 68, NO. 2, FEBRUARY 2019
 * (6) ρ_k, the harvested energy for RF
 * (7) error in estimates of the harvested energy
 * (8) utility function
+
+* default configuration:
+  * time slot lasts 1s
+  * N = 1000 (number of CPU cycles it takes to process each bit of input data)
+  * ς = ???
