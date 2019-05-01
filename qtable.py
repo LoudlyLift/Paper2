@@ -7,7 +7,7 @@ class qtable:
     """
 
     def __init__(self, state_metadata: typing.Tuple[int, ...], num_actions: int, learning_rate: float):
-        self._table = -1 * numpy.ones(state_metadata + (num_actions,))
+        self._table = 0 * numpy.ones(state_metadata + (num_actions,))
         self._learning_rate = learning_rate
         self._update_count = 0
 
