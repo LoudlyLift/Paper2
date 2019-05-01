@@ -58,14 +58,14 @@ parser.add_argument('--offload-weight', type=float, default=1e-3, help="A weight
 parser.add_argument('--energy-weight', type=float, default=0.7, help="A weight that determines how important energy usage is to the optimization algorithm")
 parser.add_argument('--latency-weight', type=float, default=1.0, help="A weight that determines how important latency is to the optimization algorithm")
 
-parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[4e6,5e6,6e6,7e6,10e6],
-                                                                         [8e6,9e6,10e6,11e6,12e6],
-                                                                         [5e6,6e6,7e6,9e6,10e6]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. There must be the same number of nested lists as there are servers, and each nested list must be the same length")
-parser.add_argument('--transmission-transitions', type=Float2DMatrix, default=[[0.5,   0.3,   0.15, 0.049, 0.001],
-                                                                               [0.2,   0.4,   0.3,  0.08,  0.02],
-                                                                               [0.05,  0.25,  0.4,  0.25,  0.05],
-                                                                               [0.02,  0.08,  0.3,  0.4,   0.2],
-                                                                               [0.001, 0.049, 0.15, 0.3,   0.5]], help="A 2D matrix that defines how likely it is to transfer from any one transmission state to another")
+parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[4e6, 5e6,  6e6,  7e6, 10e6],
+                                                                         [8e6, 9e6, 10e6, 11e6, 12e6],
+                                                                         [5e6, 6e6,  7e6,  9e6, 10e6]], help="A list. For each server, this list contains another list that contains the possible link rates with that server. There must be the same number of nested lists as there are servers, and each nested list must be the same length")
+parser.add_argument('--transmission-transitions', type=Float2DMatrix, default=[[0.5,   0.5,   0,    0,     0],
+                                                                               [0.1,   0.6,   0.3,  0,     0],
+                                                                               [0,     0.2,   0.6,  0.2,   0],
+                                                                               [0,     0,     0.3,  0.6,   0.1],
+                                                                               [0,     0,     0,    0.5,   0.5]], help="A 2D matrix that defines how likely it is to transfer from any one transmission state to another")
 parser.add_argument('--cycles-per-bit', type=int, default=1000, help="The number of CPU cycles it takes to process one bit of input data")
 parser.add_argument('--effective-capacitance', type=float, default=1e-28, help="The effective capacitance coefficient of the CPU's chip architecture")
 parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's max clock frequency")
@@ -122,10 +122,7 @@ player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
 ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_randomized,
                          player=player, future_discount=args.future_discount)
 
-#print("Transfer training")
-#ql.runEpisodes(training=True, episode_count=100000, step_count=20, log_episodes=100, log_steps=0)
-
-print("Actual training")
+print("Training")
 foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
 foo = foo[0] #because there's only one episode
 

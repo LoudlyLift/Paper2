@@ -100,7 +100,8 @@ class qlearning:
 
                 while not done:
                     if step_count > 0 and log_steps > 0 and cStep % log_steps == 0:
-                        print(f"\r    STEP: {cStep} / {step_count}", end="")
+                        norm = numpy.linalg.norm(self.player._table)
+                        print(f"\r    STEP: {cStep} / {step_count}; {norm}", end="")
                     if step_count != 0 and cStep == step_count:
                         break
                     allActQs = self.player.computeQState(state_old)
@@ -132,6 +133,8 @@ class qlearning:
                 if training:
                     self._train_episode_count += 1
             except KeyboardInterrupt as e:
+                if episode_count == 1:
+                    results.append(self._env.closeEpisode())
                 print("Keyboard Interrupt")
                 break
         print("", end="\n")
