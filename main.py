@@ -2,6 +2,7 @@ import argparse
 import ast
 import matplotlib.pyplot as plt
 import numpy
+import statistics
 import sys
 import time
 
@@ -129,33 +130,31 @@ print("Actual training")
 foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
 foo = foo[0] #because there's only one episode
 
-def plot(data, key, weight=1, ylabel=None, fName=None, fSuffix='.png'):
+def plot(dicts, key, weight=0.01, ylabel=None, fName=None, fSuffix='.png'):
     """Plots an exponential moving average. Data is an iterable of dictionaries. The
     values corresponding to the key `key` are plotted and saved to the output
     directory.
 
     """
+    assert(0 < weight and weight <= 1)
     if ylabel is None:
         ylabel = key
     if fName is None:
         fName = ylabel
 
-    data = iter(data)
-    count = 0
-    ys = []
-    try:
-        val = next(data)[key]
-        ys.append(val)
-        count += 1
-        while True:
-            dic = next(data)
-            val = weight*(dic[key]) + (1-weight)*val
-            count += 1
-            ys.append(val)
-    except StopIteration as e:
-        pass
+    data = list(map(lambda dic: dic[key], dicts))
 
-    #xs = list(range(count))
+    ys = []
+
+    #The initial value for the exponential average is the average of the first
+    #few points. We don't just want to initialize it with data[0] because that
+    #gives that observation far more weight than it deserves.
+    cInit = round(1/weight)
+    val = statistics.mean(data[:cInit])
+
+    for sample in data:
+        val = weight*sample + (1-weight)*val
+        ys.append(val)
 
     plt.xlabel('Time Slot')
     plt.ylabel(ylabel)
