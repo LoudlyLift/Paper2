@@ -69,7 +69,9 @@ parser.add_argument('--transmission-transitions', type=Float2DMatrix, default=[[
                                                                                [0.001, 0.049, 0.15, 0.3,   0.5]], help="A 2D matrix that defines how likely it is to transfer from any one transmission state to another")
 parser.add_argument('--cycles-per-bit', type=int, default=1000, help="The number of CPU cycles it takes to process one bit of input data")
 parser.add_argument('--effective-capacitance', type=float, default=1e-28, help="The effective capacitance coefficient of the CPU's chip architecture")
-parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's fixed clock frequency") #TODO: A, is clock frequency even supposed to be fixed? and B, what is the correct value?
+parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's max clock frequency")
+parser.add_argument('--num-freqs', type=int, default=1, help="The number of discrete clock frequencies to run at")
+parser.add_argument('--freq-delta-factor', type=float, default=0.3, help="Clock frequency i+1 = (1-delta_factor)*{clock frequency i}")
 
 parser.add_argument('--transmit-power', type=float, default=0.5, help="The transmit power of the device itself (Watts)")
 
@@ -95,7 +97,6 @@ class environment(model.model):
                          latency_weight=args.latency_weight,
                          cycles_per_bit=args.cycles_per_bit,
                          effective_capacitance=args.effective_capacitance,
-                         clock_frequency=args.clock_frequency,
                          transmit_power=args.transmit_power,
                          transmission_transitions=args.transmission_transitions,
                          offload_weight=args.offload_weight)
@@ -104,13 +105,15 @@ class environment(model.model):
 
         servers = range(args.num_servers) # [0, num_servers)
         parts = range(args.num_parts+1)   # [0, num_parts]
-        self.possible_actions = list(itertools.product(servers, parts))
+        freqs = range(args.num_freqs)     # [0, num_freqs)
+        self.possible_actions = list(itertools.product(servers, parts, freqs))
 
         self.move_legality = [True,] * len(self.possible_actions)
 
     def step(self, actionNum):
-        (selection, nOffload) = self.possible_actions[actionNum]
-        return super().step(selection, nOffload)
+        (selection, nOffload, iFreq) = self.possible_actions[actionNum]
+        freq = args.clock_frequency * (1-args.freq_delta_factor)**iFreq
+        return super().step(selection, nOffload, freq)
 
     def getNumActions(self):
         return len(self.possible_actions)
@@ -208,7 +211,8 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
 for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energy"),
                              ("latency", "Latency", "2-latency"),
                              ("utility","Utility","4-utility"),
-                             ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff")]:
+                             ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff"),
+                             ("freq", "CPU Frequency", "freq")]:
     plot(foo, key, width=500, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)

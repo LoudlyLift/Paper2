@@ -1,5 +1,6 @@
 import numpy
 import math
+import random
 
 import markov
 
@@ -23,8 +24,8 @@ class model:
 
     def __init__(self, cServers, cParts, cHarvestLevels, transmission_rates,
                  max_harvest, data_gen_rate, energy_weight, latency_weight,
-                 cycles_per_bit, effective_capacitance, clock_frequency,
-                 transmit_power, transmission_transitions, offload_weight):
+                 cycles_per_bit, effective_capacitance, transmit_power,
+                 transmission_transitions, offload_weight):
         #TODO: WAAY to many parameters here. Can argparse construct an object?
         #Then we could just pass that and save it. It'd make usage a little
         #uglier inside of this class (self.args.LATENCY_WEIGHT instead of
@@ -41,7 +42,6 @@ class model:
         self.TRANSMIT_POWER = transmit_power
         self.TRANSMISSION_RATES = transmission_rates
         self.EFFECTIVE_CAPACITANCE = effective_capacitance
-        self.CLOCK_FREQ = clock_frequency
         self.TRANSMISSION_TRANSITIONS = transmission_transitions
         self.OFFLOAD_WEIGHT = offload_weight
 
@@ -71,7 +71,7 @@ class model:
         self.harvest = self.MAX_HARVEST #TODO
         self.harvest_est = self.MAX_HARVEST #TODO
 
-    def computation_step(self, selection, nOffload):
+    def computation_step(self, selection, nOffload, freq):
         # Compute new connection rates
         self.iDataRates = [ con.step() for con in self.connections ]
 
@@ -91,7 +91,7 @@ class model:
 
 
         #(1): TODO ASSUMING CONSTANT FREQ
-        latencyLocal = cLocalCycles / self.CLOCK_FREQ
+        latencyLocal = cLocalCycles / freq
 
         #(3)
         latencyOffload = cOffloadBits / linkRate
@@ -102,7 +102,7 @@ class model:
 
         #(2), but with fixed clock frequency
         energyLocal = cLocalCycles * self.EFFECTIVE_CAPACITANCE * \
-            (self.CLOCK_FREQ**2)
+            (freq**2)
 
         #(4)
         energyOffload = latencyOffload * self.TRANSMIT_POWER
@@ -110,16 +110,18 @@ class model:
         #(N/A): pg. 1933, directly above (5)
         energyConsumption = energyLocal + energyOffload
 
+        tOffload = self.OFFLOAD_WEIGHT * cOffloadBits
+        tEnergy = -self.ENERGY_WEIGHT * energyConsumption
+        tLatency = -self.LATENCY_WEIGHT * latency
+
         # (8)
-        utility  = 0
-        utility += self.OFFLOAD_WEIGHT * cOffloadBits
-        utility -= self.ENERGY_WEIGHT * energyConsumption
-        utility -= self.LATENCY_WEIGHT * latency
+        utility  = tOffload + tEnergy + tLatency
 
         return { "utility": utility, "energyConsumption": energyConsumption,
-                 "latency": latency, "fracOffload": nOffload/self.C_PARTS, }
+                 "latency": latency, "fracOffload": nOffload/self.C_PARTS,
+                 "freq": freq, }
 
-    def step(self, selection, nOffload):
+    def step(self, selection, nOffload, freq):
         """Simulates a single timestep. The device elects to offload `nOffload`
         of the `C_PARTS` parts to the server indicated by the index `selection`.
 
@@ -130,7 +132,7 @@ class model:
         assert(type(selection) == int)
         assert(0 <= selection and selection < self.C_SERVERS)
 
-        result = self.computation_step(selection, nOffload)
+        result = self.computation_step(selection, nOffload, freq)
         self.results.append(result)
 
         # "pre"-step computations are done after computing the reward because
