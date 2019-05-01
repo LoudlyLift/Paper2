@@ -52,13 +52,11 @@ class qlearning:
         values.
 
     """
-    def __init__(self, env, compute_randact, consPlayer, player_config=None, future_discount=.99):
+    def __init__(self, env, compute_randact, player, future_discount=.99):
         self._env = env
         self._compute_randact = compute_randact
         self._future_discount = future_discount
-
-        state_metadata = env.getStateMetadata()
-        self.player = consPlayer(state_metadata, self._env.getNumActions(), config=player_config)
+        self.player = player
 
 
         if self._env.isTrainable:

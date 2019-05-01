@@ -117,14 +117,14 @@ class environment(model.model):
         return self.move_legality
 
 env = environment(args)
+player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
+                       learning_rate=args.learning_rate)
 
 ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_randomized,
-                         consPlayer=qtable.qtable,
-                         player_config={"learning_rate": args.learning_rate},
-                         future_discount=args.future_discount)
+                         player=player, future_discount=args.future_discount)
 
-print("Transfer training")
-ql.runEpisodes(training=True, episode_count=10000, step_count=20, log_episodes=100, log_steps=0)
+#print("Transfer training")
+#ql.runEpisodes(training=True, episode_count=100000, step_count=20, log_episodes=100, log_steps=0)
 
 print("Actual training")
 foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
@@ -168,6 +168,6 @@ for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energ
                              ("latency", "Latency", "2-latency"),
                              ("dropped", "Task Drop Rate", "3-drop"),
                              ("utility","Utility","4-utility")]:
-    plot(foo, key, weight=0.001, ylabel=ylabel, fName=fName)
+    plot(foo, key, weight=0.005, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)
