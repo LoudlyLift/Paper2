@@ -139,7 +139,7 @@ class model:
         return {
             "utility": utility, "battery": self.battery,
             "energyConsumption": energyConsumption, "latency": latency,
-            "dropped": dropped,
+            "dropped": dropped, "fracOffload": nOffload/self.C_PARTS,
         }
 
     def step(self, selection, nOffload):

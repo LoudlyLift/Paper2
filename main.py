@@ -167,7 +167,8 @@ def plot(dicts, key, weight=0.01, ylabel=None, fName=None, fSuffix='.png'):
 for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energy"),
                              ("latency", "Latency", "2-latency"),
                              ("dropped", "Task Drop Rate", "3-drop"),
-                             ("utility","Utility","4-utility")]:
-    plot(foo, key, weight=0.005, ylabel=ylabel, fName=fName)
+                             ("utility","Utility","4-utility"),
+                             ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff")]:
+    plot(foo, key, weight=0.0005, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)
