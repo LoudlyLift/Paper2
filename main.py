@@ -191,6 +191,14 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
 
         ys.append(tot/cSamp)
 
+    sampleDensity = 100 #samples per pixel
+    dpi = 300
+
+    width = nSamples / sampleDensity / dpi
+    maxWidth = 20
+    width = min(maxWidth, width)
+
+    plt.figure(figsize=(width+2,6), dpi=dpi)
     plt.xlabel('Time Slot')
     plt.ylabel(ylabel)
     plt.plot(ys)
@@ -204,6 +212,6 @@ for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energ
                              ("utility","Utility","4-utility"),
                              ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff"),
                              ("freq", "CPU Frequency", "freq")]:
-    plot(foo, key, width=500, ylabel=ylabel, fName=fName)
+    plot(foo, key, width=5000, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)
