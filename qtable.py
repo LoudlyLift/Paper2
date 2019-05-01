@@ -12,17 +12,14 @@ class qtable:
         self._update_count = 0
 
     def computeQState(self, state):
-        return self._table[state]
+        return self._table[state].copy()
 
-    def updateQState(self, state, qValues):
-        self._update_count += 1
-
+    def updateQState(self, state, targetQs):
         lr = self._learning_rate
-        val = self._table[state]
+        currentQs = self.computeQState(state)
 
-        val = lr * val + (1 - lr) * qValues
-
-        self._table[state] = val
+        self._table[state] = lr * targetQs + (1 - lr) * currentQs
+        self._update_count += 1
 
     def getUpdateCount(self):
         return self._update_count
