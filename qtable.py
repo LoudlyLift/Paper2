@@ -6,8 +6,8 @@ class qtable:
     """See qlearning.py for the definitions of state_metadata, state, and qValues
     """
 
-    def __init__(self, state_metadata: typing.Tuple[int, ...], num_actions: int, learning_rate: float):
-        self._table = 0 * numpy.ones(state_metadata + (num_actions,))
+    def __init__(self, state_metadata: typing.Tuple[int, ...], num_actions: int, learning_rate: float, initial_scale: float=0.001):
+        self._table = numpy.random.random(state_metadata + (num_actions,)) * initial_scale
         self._learning_rate = learning_rate
         self._update_count = 0
 
