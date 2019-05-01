@@ -89,6 +89,9 @@ class qlearning:
             assert(self._env.isTrainable)
         results = []
         episode_count = max(1, episode_count)
+
+        oldMat = self.player._table.copy()
+
         for i in range(1, episode_count+1):
             cStep = 0
             if log_episodes > 0 and i % log_episodes == 0:
@@ -100,8 +103,11 @@ class qlearning:
 
                 while not done:
                     if step_count > 0 and log_steps > 0 and cStep % log_steps == 0:
-                        norm = numpy.linalg.norm(self.player._table)
-                        print(f"\r    STEP: {cStep} / {step_count}; {norm}", end="")
+                        #casual test show that computing the norm of the delta has <1% impact on performance
+                        delta = self.player._table - oldMat
+                        norm = numpy.linalg.norm(delta)
+                        print(f"\r    STEP: {cStep} / {step_count}; {norm:15.3f}", end="")
+                        oldMat = self.player._table.copy()
                     if step_count != 0 and cStep == step_count:
                         break
                     allActQs = self.player.computeQState(state_old)
