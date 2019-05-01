@@ -1,5 +1,23 @@
+import os
 import random
+import shelve
+import time
 
+def getCachedVariable(dbfile, varName, constructor, depFNames=[]):
+    #The key for modification time has a randomized suffix to avoid collisions
+    mTimeKey = varName + "_modificationTime_16159_12115"
+
+    with shelve.open(dbfile) as shelf:
+        if not (varName in shelf and mTimeKey in shelf):
+            shelf[mTimeKey] = time.time()
+            shelf[varName] = constructor()
+
+        mTime = shelf[mTimeKey]
+        for fName in depFNames:
+            if os.path.getmtime(fName) > mTime:
+                print(f"WARNING: {fName} has been modified since {varName} was computed")
+
+        return shelf[varName]
 
 def choose(iterable, filter=None):
     """Randomly select a single element from an arbitrary iterable that satisfies an
