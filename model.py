@@ -22,8 +22,8 @@ class model:
         def rateFromIndex(self, index):
             return self.rates[index]
 
-    def __init__(self, cServers, cParts, cHarvestLevels, transmission_rates,
-                 max_harvest, data_gen_rate, energy_weight, latency_weight,
+    def __init__(self, cServers, cParts, transmission_rates,
+                 data_gen_rate, energy_weight, latency_weight,
                  cycles_per_bit, effective_capacitance, transmit_power,
                  transmission_transitions, offload_weight):
         #TODO: WAAY to many parameters here. Can argparse construct an object?
@@ -33,8 +33,6 @@ class model:
         #I think.
         self.C_SERVERS = cServers
         self.C_PARTS = cParts
-        self.C_HARVEST = cHarvestLevels
-        self.MAX_HARVEST = max_harvest
         self.DATA_GEN_RATE = data_gen_rate
         self.ENERGY_WEIGHT = energy_weight
         self.LATENCY_WEIGHT = latency_weight
@@ -48,14 +46,10 @@ class model:
         self.reset()
 
     def getStateMetadata(self):
-        return tuple(con.statecount() for con in self.connections) + (self.C_HARVEST,)
+        return tuple(con.statecount() for con in self.connections)
 
     def getState(self):
-        harv = self.harvest_est * (self.C_HARVEST-1) / self.MAX_HARVEST
-        harv = round(harv)
-        assert(0 <= harv and harv < self.C_HARVEST)
-
-        return tuple(self.iDataRates) + (harv,)
+        return tuple(self.iDataRates)
 
     def reset(self):
         self.connections = [ model.connection(rates, self.TRANSMISSION_TRANSITIONS) for rates in self.TRANSMISSION_RATES ]
@@ -63,13 +57,7 @@ class model:
 
         self.results = []
 
-        self.computation_prestep()
         return self.getState()
-
-
-    def computation_prestep(self):
-        self.harvest = self.MAX_HARVEST #TODO
-        self.harvest_est = self.MAX_HARVEST #TODO
 
     def computation_step(self, selection, nOffload, freq):
         # Compute new connection rates
@@ -135,9 +123,6 @@ class model:
         result = self.computation_step(selection, nOffload, freq)
         self.results.append(result)
 
-        # "pre"-step computations are done after computing the reward because
-        # it's actually setting up the state for the NEXT step.
-        self.computation_prestep()
         state = self.getState()
 
         done = False

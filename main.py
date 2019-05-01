@@ -53,7 +53,6 @@ parser.add_argument('--future-discount', type=float, default=0.5, help="What wei
 # MODEL
 parser.add_argument('--num-servers', type=int, default=3, help="The number of edge devices that are available for the IoT device to offload tasks to (M)")
 parser.add_argument('--num-parts', type=int, default=10, help="The number of parts that the task is split into (N_x)")
-parser.add_argument('--num-harvest-levels', type=int, default=6,  help="The number of levels to quantize the estimate of harvested energy into")
 
 parser.add_argument('--offload-weight', type=float, default=1e-3, help="A weight that determines how much emphasis the optimization algorithm will place on offloading tasks")
 parser.add_argument('--energy-weight', type=float, default=0.7, help="A weight that determines how important energy usage is to the optimization algorithm")
@@ -78,9 +77,6 @@ parser.add_argument('--transmit-power', type=float, default=0.5, help="The trans
 #TODO: find actual value
 parser.add_argument('--data-gen-rate', type=float, default=120e3, help="The rate at which the device generates tasks/data for processing (C^(k); units of bits (?) per time interval)")
 
-#TODO: calculate this dynamically
-parser.add_argument('--max-harvest', type=float, default=(1.7e-3 * 3600), help="The maximum amount of energy that CAN be harvested in a single tick (only affects quantization levels? actual max depends on the other parameters)")
-
 args = parser.parse_args()
 
 if(len(args.transmission_rates) != args.num_servers):
@@ -89,9 +85,7 @@ if(len(args.transmission_rates) != args.num_servers):
 class environment(model.model):
     def __init__(self, args):
         super().__init__(cServers=args.num_servers, cParts=args.num_parts,
-                         cHarvestLevels=args.num_harvest_levels,
                          transmission_rates=args.transmission_rates,
-                         max_harvest=args.max_harvest,
                          data_gen_rate=args.data_gen_rate,
                          energy_weight=args.energy_weight,
                          latency_weight=args.latency_weight,
