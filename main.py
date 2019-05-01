@@ -1,5 +1,7 @@
 import argparse
 import ast
+import collections
+import math
 import matplotlib.pyplot as plt
 import numpy
 import statistics
@@ -130,31 +132,70 @@ print("Actual training")
 foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
 foo = foo[0] #because there's only one episode
 
-def plot(dicts, key, weight=0.01, ylabel=None, fName=None, fSuffix='.png'):
-    """Plots an exponential moving average. Data is an iterable of dictionaries. The
-    values corresponding to the key `key` are plotted and saved to the output
+def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
+    """Plots a curve that is, in general, the centered moving average of the given
+    width. When datapoints are missing, simply take the average of the available
+    points.
+
+    Data is an iterable of dictionaries. The values of those dictionaries
+    corresponding to the key `key` are plotted and saved to the output
     directory.
 
     """
-    assert(0 < weight and weight <= 1)
+    assert(width >= 1)
     if ylabel is None:
         ylabel = key
     if fName is None:
         fName = ylabel
 
-    data = list(map(lambda dic: dic[key], dicts))
+    data = collections.deque(map(lambda dic: dic[key], dicts))
+    data.reverse() #since we're using appendleft instead of right
+    nSamples = len(data)
 
+    assert(nSamples > width)
+    if len(data) < 3*width:
+        print("Warning: given width makes up a large fraction of the given data")
+
+    tot = 0
     ys = []
+    window = collections.deque()
 
-    #The initial value for the exponential average is the average of the first
-    #few points. We don't just want to initialize it with data[0] because that
-    #gives that observation far more weight than it deserves.
-    cInit = round(1/weight)
-    val = statistics.mean(data[:cInit])
+    # initialize the right half of window
+    cSamp = 0
+    while cSamp < math.floor(width/2):
+        sample = data.pop()
+        tot += sample
 
-    for sample in data:
-        val = weight*sample + (1-weight)*val
-        ys.append(val)
+        window.appendleft(sample)
+        cSamp += 1
+
+    # process data until the window is filled
+    while cSamp < width:
+        sample = data.pop()
+        tot += sample
+        ys.append(tot / cSamp)
+
+        window.appendleft(sample)
+        cSamp += 1
+
+    # process data until we don't have any more samples to load into the window
+    while len(data) > 0:
+        sample = data.pop()
+
+        tot -= window.pop()
+        tot += sample
+        window.appendleft(sample)
+        #cSamp += 0
+
+        ys.append(tot/cSamp)
+
+    #import pdb; pdb.set_trace()
+    # process data until the window is centered on the last sample
+    for _ in range(math.ceil(width/2)):
+        tot -= window.pop()
+        cSamp -= 1
+
+        ys.append(tot/cSamp)
 
     plt.xlabel('Time Slot')
     plt.ylabel(ylabel)
@@ -168,6 +209,6 @@ for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energ
                              ("latency", "Latency", "2-latency"),
                              ("utility","Utility","4-utility"),
                              ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff")]:
-    plot(foo, key, weight=0.0005, ylabel=ylabel, fName=fName)
+    plot(foo, key, width=500, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)
