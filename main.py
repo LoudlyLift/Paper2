@@ -51,14 +51,11 @@ parser.add_argument('--future-discount', type=float, default=0.5, help="What wei
 # MODEL
 parser.add_argument('--num-servers', type=int, default=3, help="The number of edge devices that are available for the IoT device to offload tasks to (M)")
 parser.add_argument('--num-parts', type=int, default=10, help="The number of parts that the task is split into (N_x)")
-parser.add_argument('--num-battery-levels', type=int, default=21, help="The number of levels to quantize the battery into")
 parser.add_argument('--num-harvest-levels', type=int, default=6,  help="The number of levels to quantize the estimate of harvested energy into")
 
 parser.add_argument('--offload-weight', type=float, default=1e-3, help="A weight that determines how much emphasis the optimization algorithm will place on offloading tasks")
 parser.add_argument('--energy-weight', type=float, default=0.7, help="A weight that determines how important energy usage is to the optimization algorithm")
 parser.add_argument('--latency-weight', type=float, default=1.0, help="A weight that determines how important latency is to the optimization algorithm")
-
-parser.add_argument('--max-battery', type=float, default=(7.4*3600), help="The maximum charge the battery can hold (Wh)")
 
 parser.add_argument('--transmission-rates', type=Float2DMatrix, default=[[4e6,5e6,6e6,7e6,10e6],
                                                                          [8e6,9e6,10e6,11e6,12e6],
@@ -71,7 +68,6 @@ parser.add_argument('--transmission-transitions', type=Float2DMatrix, default=[[
 parser.add_argument('--cycles-per-bit', type=int, default=1000, help="The number of CPU cycles it takes to process one bit of input data")
 parser.add_argument('--effective-capacitance', type=float, default=1e-28, help="The effective capacitance coefficient of the CPU's chip architecture")
 parser.add_argument('--clock-frequency', type=float, default=1e9, help="The device's CPU's fixed clock frequency") #TODO: A, is clock frequency even supposed to be fixed? and B, what is the correct value?
-parser.add_argument('--drop-penalty', type=float, default=10, help="The cost of letting the battery level reach zero (ψ in the paper)")
 
 parser.add_argument('--transmit-power', type=float, default=0.5, help="The transmit power of the device itself (Watts)")
 
@@ -88,15 +84,19 @@ if(len(args.transmission_rates) != args.num_servers):
     exit(1)
 class environment(model.model):
     def __init__(self, args):
-        super().__init__(args.num_servers, args.num_parts,
-                         args.num_battery_levels, args.num_harvest_levels,
-                         args.transmission_rates, args.max_battery,
-                         args.max_harvest, args.data_gen_rate,
-                         args.energy_weight, args.latency_weight,
-                         args.drop_penalty, args.cycles_per_bit,
-                         args.effective_capacitance, args.clock_frequency,
-                         args.transmit_power, args.transmission_transitions,
-                         args.offload_weight)
+        super().__init__(cServers=args.num_servers, cParts=args.num_parts,
+                         cHarvestLevels=args.num_harvest_levels,
+                         transmission_rates=args.transmission_rates,
+                         max_harvest=args.max_harvest,
+                         data_gen_rate=args.data_gen_rate,
+                         energy_weight=args.energy_weight,
+                         latency_weight=args.latency_weight,
+                         cycles_per_bit=args.cycles_per_bit,
+                         effective_capacitance=args.effective_capacitance,
+                         clock_frequency=args.clock_frequency,
+                         transmit_power=args.transmit_power,
+                         transmission_transitions=args.transmission_transitions,
+                         offload_weight=args.offload_weight)
 
         self.isTrainable = True
 
@@ -166,7 +166,6 @@ def plot(dicts, key, weight=0.01, ylabel=None, fName=None, fSuffix='.png'):
 
 for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energy"),
                              ("latency", "Latency", "2-latency"),
-                             ("dropped", "Task Drop Rate", "3-drop"),
                              ("utility","Utility","4-utility"),
                              ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff")]:
     plot(foo, key, weight=0.0005, ylabel=ylabel, fName=fName)

@@ -21,11 +21,10 @@ class model:
         def rateFromIndex(self, index):
             return self.rates[index]
 
-    def __init__(self, cServers, cParts, cBatteryLevels, cHarvestLevels,
-                 transmission_rates, max_battery, max_harvest, data_gen_rate,
-                 energy_weight, latency_weight, drop_penalty, cycles_per_bit,
-                 effective_capacitance, clock_frequency, transmit_power,
-                 transmission_transitions, offload_weight):
+    def __init__(self, cServers, cParts, cHarvestLevels, transmission_rates,
+                 max_harvest, data_gen_rate, energy_weight, latency_weight,
+                 cycles_per_bit, effective_capacitance, clock_frequency,
+                 transmit_power, transmission_transitions, offload_weight):
         #TODO: WAAY to many parameters here. Can argparse construct an object?
         #Then we could just pass that and save it. It'd make usage a little
         #uglier inside of this class (self.args.LATENCY_WEIGHT instead of
@@ -33,14 +32,11 @@ class model:
         #I think.
         self.C_SERVERS = cServers
         self.C_PARTS = cParts
-        self.C_BAT = cBatteryLevels
         self.C_HARVEST = cHarvestLevels
-        self.MAX_BATTERY = max_battery
         self.MAX_HARVEST = max_harvest
         self.DATA_GEN_RATE = data_gen_rate
         self.ENERGY_WEIGHT = energy_weight
         self.LATENCY_WEIGHT = latency_weight
-        self.DROP_PENALTY = drop_penalty
         self.CYCLES_PER_BIT = cycles_per_bit
         self.TRANSMIT_POWER = transmit_power
         self.TRANSMISSION_RATES = transmission_rates
@@ -52,24 +48,18 @@ class model:
         self.reset()
 
     def getStateMetadata(self):
-        return tuple(con.statecount() for con in self.connections) + (self.C_HARVEST, self.C_BAT)
+        return tuple(con.statecount() for con in self.connections) + (self.C_HARVEST,)
 
     def getState(self):
-        bat = self.battery * (self.C_BAT-1) / self.MAX_BATTERY
-        bat = round(bat)
-        assert(0 <= bat and bat < self.C_BAT)
-
         harv = self.harvest_est * (self.C_HARVEST-1) / self.MAX_HARVEST
         harv = round(harv)
         assert(0 <= harv and harv < self.C_HARVEST)
 
-        return tuple(self.iDataRates) + (harv,bat)
+        return tuple(self.iDataRates) + (harv,)
 
     def reset(self):
         self.connections = [ model.connection(rates, self.TRANSMISSION_TRANSITIONS) for rates in self.TRANSMISSION_RATES ]
         self.iDataRates = [ con.state for con in self.connections ]
-
-        self.battery = 0
 
         self.results = []
 
@@ -120,27 +110,14 @@ class model:
         #(N/A): pg. 1933, directly above (5)
         energyConsumption = energyLocal + energyOffload
 
-        assert(0 <= self.battery and self.battery <= self.MAX_BATTERY)
-        #(5)
-        self.battery += self.harvest
-        self.battery -= energyConsumption
-        self.battery = min(self.battery, self.MAX_BATTERY)
-        self.battery = max(self.battery, 0)
-
-        dropped = int(self.battery == 0)
-
         # (8)
         utility  = 0
         utility += self.OFFLOAD_WEIGHT * cOffloadBits
-        utility -= self.DROP_PENALTY * dropped
         utility -= self.ENERGY_WEIGHT * energyConsumption
         utility -= self.LATENCY_WEIGHT * latency
 
-        return {
-            "utility": utility, "battery": self.battery,
-            "energyConsumption": energyConsumption, "latency": latency,
-            "dropped": dropped, "fracOffload": nOffload/self.C_PARTS,
-        }
+        return { "utility": utility, "energyConsumption": energyConsumption,
+                 "latency": latency, "fracOffload": nOffload/self.C_PARTS, }
 
     def step(self, selection, nOffload):
         """Simulates a single timestep. The device elects to offload `nOffload`
@@ -165,9 +142,8 @@ class model:
         return (state, result["utility"], done)
 
     def closeEpisode(self):
-        """Returns a list. That contains, for each time step, the tuple (energy
-        consumption, computational latency, whether or not the task dropped,
-        utility)
+        """Returns a list that contains, for each time step, a dictionary of useful
+        values.
 
         """
         return self.results
