@@ -7,7 +7,7 @@ class qtable:
     """
 
     def __init__(self, state_metadata: typing.Tuple[int, ...], num_actions: int, learning_rate_function, initial_scale: float=0.001):
-        self._table = numpy.random.random(state_metadata + (num_actions,)) * initial_scale
+        self._table = numpy.random.random(state_metadata + (num_actions,)) * initial_scale - 10
         self._update_count = 0
         self._fLR = learning_rate_function
 
