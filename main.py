@@ -203,9 +203,9 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
 
 env = environment(args)
 player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
-                       learning_rate_function=lambda step: args.learning_halflife / (step + args.learning_halflife))
+                       learning_rate_function=lambda step: max(0.01, args.learning_halflife / (step + args.learning_halflife)))
 
-ql = qlearning.qlearning(env=env, compute_randact=lambda step: args.random_halflife / (step + args.random_halflife),
+ql = qlearning.qlearning(env=env, compute_randact=lambda step: max(0.02, args.random_halflife / (step + args.random_halflife)),
                          player=player, future_discount=args.future_discount)
 
 print("Training")
