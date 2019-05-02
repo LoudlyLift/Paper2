@@ -115,17 +115,6 @@ class environment(model.model):
     def getLegalMoves(self):
         return self.move_legality
 
-env = environment(args)
-player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
-                       learning_rate_function=lambda step: args.learning_halflife / (step + args.learning_halflife))
-
-ql = qlearning.qlearning(env=env, compute_randact=lambda step: args.random_halflife / (step + args.random_halflife),
-                         player=player, future_discount=args.future_discount)
-
-print("Training")
-foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
-foo = foo[0] #because there's only one episode
-
 def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
     """Plots a curve that is, in general, the centered moving average of the given
     width. When datapoints are missing, simply take the average of the available
@@ -206,6 +195,18 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
     plt.ylim(min(0, ymin), ymax)
     plt.savefig(f'{args.dir_out}/{fName}{fSuffix}', bbox_inches='tight')
     plt.close()
+
+
+env = environment(args)
+player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
+                       learning_rate_function=lambda step: args.learning_halflife / (step + args.learning_halflife))
+
+ql = qlearning.qlearning(env=env, compute_randact=lambda step: args.random_halflife / (step + args.random_halflife),
+                         player=player, future_discount=args.future_discount)
+
+print("Training")
+foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
+foo = foo[0] #because there's only one episode
 
 for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energy"),
                              ("latency", "Latency", "2-latency"),

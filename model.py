@@ -78,7 +78,7 @@ class model:
         linkRate = con.rateFromIndex(self.iDataRates[selection])
 
 
-        #(1): TODO ASSUMING CONSTANT FREQ
+        #(1)
         latencyLocal = cLocalCycles / freq
 
         #(3)
