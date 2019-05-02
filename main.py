@@ -47,7 +47,7 @@ parser.add_argument('--dir-out', type=str, default="./Out", help="The directory 
 parser.add_argument('--train-steps', type=int, default=30000, help="How many steps to take for training")
 parser.add_argument('--eval-steps', type=int, default=3000, help="How many steps to take during evaluation")
 parser.add_argument('--fraction-randomized', type=float, default=0.1, help="What fraction ([0,1]) of actions should be chosen at random")
-parser.add_argument('--learning-rate', type=float, default=0.1, help="The Q-Table updates with a moving average. This is the weight of the most recent observation. Equivalent to 1-α from the paper.")
+parser.add_argument('--learning-halflife', type=float, default=10000, help="The learning rate is f(x)=1/x where x is the number of learning steps that have already been taken, except it has been scaled and shifted such that f(x)=1, and f(learning-halflife)=0.5")
 parser.add_argument('--future-discount', type=float, default=0.5, help="What weight to place on future values; zero ignores all future consequences, values near one give them significant weight (Denoted by γ in the paper)")
 
 # MODEL
@@ -117,7 +117,7 @@ class environment(model.model):
 
 env = environment(args)
 player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
-                       learning_rate=args.learning_rate)
+                       learning_rate_function=lambda step: args.learning_halflife / (step + args.learning_halflife))
 
 ql = qlearning.qlearning(env=env, compute_randact=lambda _: args.fraction_randomized,
                          player=player, future_discount=args.future_discount)
