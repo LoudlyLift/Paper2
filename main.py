@@ -196,7 +196,7 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
 
     width = nSamples / sampleDensity / dpi
     maxWidth = 20
-    width = min(maxWidth, width)
+    #width = min(maxWidth, width)
 
     plt.figure(figsize=(width+2,6), dpi=dpi)
     plt.xlabel('Time Slot')
