@@ -1,10 +1,11 @@
-import random
 import argparse
 import ast
 import collections
 import math
 import matplotlib.pyplot as plt
 import numpy
+import os
+import random
 import statistics
 import sys
 import time
@@ -119,22 +120,7 @@ class environment(model.model):
     def randomAct(self):
         return random.randrange(self.getNumActions())
 
-def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
-    """Plots a curve that is, in general, the centered moving average of the given
-    width. When datapoints are missing, simply take the average of the available
-    points.
-
-    Data is an iterable of dictionaries. The values of those dictionaries
-    corresponding to the key `key` are plotted and saved to the output
-    directory.
-
-    """
-    assert(width >= 1)
-    if ylabel is None:
-        ylabel = key
-    if fName is None:
-        fName = ylabel
-
+def preprocess(dicts, key, width):
     data = collections.deque(map(lambda dic: dic[key], dicts))
     data.reverse() #since we're using appendleft instead of right
     nSamples = len(data)
@@ -183,6 +169,28 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
         cSamp -= 1
 
         ys.append(tot/cSamp)
+    return ys
+
+def plot(data, names, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
+    """Plots a curve that is, in general, the centered moving average of the given
+    width. When datapoints are missing, simply take the average of the available
+    points.
+
+    Data is an iterable of dictionaries. The values of those dictionaries
+    corresponding to the key `key` are plotted and saved to the output
+    directory.
+
+    """
+    assert(width >= 1)
+    if ylabel is None:
+        ylabel = key
+    if fName is None:
+        fName = ylabel
+
+    data = [ preprocess(foo, key, width) for foo in data ]
+    nSamples = len(data[0])
+    for samples in data:
+        assert(len(samples) == nSamples)
 
     sampleDensity = 100 #samples per pixel
     dpi = 300
@@ -194,29 +202,39 @@ def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
     plt.figure(figsize=(width+2,6), dpi=dpi)
     plt.xlabel('Time Slot')
     plt.ylabel(ylabel)
-    plt.plot(ys)
+    for (series, name) in zip(data, names):
+        plt.plot(series, label=name)
     (ymin, ymax) = plt.ylim()
-    plt.ylim(min(0, ymin), ymax)
+    plt.ylim(min(0, ymin), max(0, ymax))
+
+    try:
+        os.mkdir(args.dir_out)
+    except FileExistsError as e:
+        pass
+    plt.legend(loc='upper left')
     plt.savefig(f'{args.dir_out}/{fName}{fSuffix}', bbox_inches='tight')
     plt.close()
 
 
-env = environment(args)
-player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
-                       learning_rate_function=lambda step: max(0.01, args.learning_halflife / (step + args.learning_halflife)))
+def run(args):
+    env = environment(args)
+    player = qtable.qtable(env.getStateMetadata(), env.getNumActions(),
+                           learning_rate_function=lambda step: max(0.01, args.learning_halflife / (step + args.learning_halflife)))
 
-ql = qlearning.qlearning(env=env, compute_randact=lambda step: max(0.02, args.random_halflife / (step + args.random_halflife)),
-                         player=player, future_discount=args.future_discount)
+    ql = qlearning.qlearning(env=env, compute_randact=lambda step: max(0.02, args.random_halflife / (step + args.random_halflife)),
+                             player=player, future_discount=args.future_discount)
 
-print("Training")
-foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
-foo = foo[0] #because there's only one episode
+    foo = ql.runEpisodes(training=True, episode_count=1, step_count=args.train_steps, log_episodes=0, log_steps=args.log_period)
+    return foo[0] #because there's only one episode
 
-for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "1-energy"),
-                             ("latency", "Latency", "2-latency"),
-                             ("utility","Utility","4-utility"),
-                             ("fracOffload", "Fraction of Tasks Offloaded", "5-fracOff"),
-                             ("freq", "CPU Frequency", "freq")]:
-    plot(foo, key, width=5000, ylabel=ylabel, fName=fName)
+args.num_freqs = 1
+foo = run(args)
+args.num_freqs = 9
+bar = run(args)
+
+for (key, ylabel, fName) in [("energyConsumption","Energy Consumption", "energy"),
+                             ("latency", "Latency", "latency"),
+                             ("utility","Utility", "utility")]:
+    plot([foo,bar], ["Fixed Frequency", "Variable Frequency"], key, width=args.train_steps/25, ylabel=ylabel, fName=fName)
 
 #results = ql.evaluate(args.eval_steps)
