@@ -1,3 +1,4 @@
+import random
 import argparse
 import ast
 import collections
@@ -114,6 +115,9 @@ class environment(model.model):
 
     def getLegalMoves(self):
         return self.move_legality
+
+    def randomAct(self):
+        return random.randrange(self.getNumActions())
 
 def plot(dicts, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
     """Plots a curve that is, in general, the centered moving average of the given

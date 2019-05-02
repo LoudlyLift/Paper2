@@ -111,12 +111,10 @@ class qlearning:
                     if step_count != 0 and cStep == step_count:
                         break
                     allActQs = self.player.computeQState(state_old)
-                    legalMoves = self._env.getLegalMoves()
                     if training and numpy.random.rand(1) < self._compute_randact(self._train_update_count):
-                        #TODO: this step is MUCH slower than choosing a single
-                        #random int, which is what the environment would do.
-                        (_, _, act) = helper.choose(zip(allActQs, legalMoves, itertools.count()), lambda tup: tup[1])
+                        act = self._env.randomAct()
                     else:
+                        legalMoves = self._env.getLegalMoves()
                         act = bestLegalMove(allActQs, legalMoves)
 
                     state_new,reward,done = self._env.step(act)
