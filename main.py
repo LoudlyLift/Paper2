@@ -189,8 +189,6 @@ def plot(data, names, key, width=1000, ylabel=None, fName=None, fSuffix='.png'):
 
     data = [ preprocess(foo, key, width) for foo in data ]
     nSamples = len(data[0])
-    for samples in data:
-        assert(len(samples) == nSamples)
 
     sampleDensity = 100 #samples per pixel
     dpi = 300
